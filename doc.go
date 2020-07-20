@@ -1,57 +1,42 @@
 package doc
 
 import (
+	"crypto/md5"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
-// 服务器配置
-type Server struct {
-	Addr      string // 地址
-	Port      string // 端口
-	ApiServer string // 测试接口访问地址
-}
-
-// 存储每个文件的注释内容
-type Doc struct {
-	Name  string
-	Count int
-	Param []map[string][]string
-}
-
-// 响应值
 type Response struct {
-	Docs   []Doc
-	IpAddr string
-	Port   string
+	Docs      []Doc
+	IpAddr    string
+	Port      string
+	ApiServer string
+}
+
+type FileInfo struct {
+	Sum string
+	Len int
 }
 
 var (
-	docs              []Doc                      //文档数组
-	server            Server                     //服务信息
-	defaultConfigPath = "doc/public/config.json" //默认配置文件
-	defaultStaticPath = "doc/public"             //默认静态目录
-	ipAddr            = getIpv4Addr()            //部署主机局域网地址
-	configInfo         map[string]interface{}
+	defaultStaticDir = "doc/public" //默认静态目录
+	updateQueue      = NewQueue(10) //保存更新的信息
+	docInfo          = make(map[string]FileInfo)
+	docs             []Doc
 )
 
-func checkError(err error, code int) {
-	switch code {
-
-	}
-	if err != nil {
-		log.Printf("Error: %s", err)
-	}
-}
-
-// 获取本机ip地址
 func getIpv4Addr() string {
 	var ipv4 string
 	netInterfaces, err := net.Interfaces()
-	checkError(err, 200)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for _, v := range netInterfaces {
 		// 判断ip地址有效
 		if v.Flags&net.FlagUp != 0 {
@@ -68,104 +53,72 @@ func getIpv4Addr() string {
 	return ipv4
 }
 
-// 静态文件服务
-func startStaticFileServer(_cp string) {
-	fs := http.FileServer(http.Dir(_cp))
+func staticFileServer(dir string) {
+	fs := http.FileServer(http.Dir(dir))
 	http.Handle("/doc/", http.StripPrefix("/doc/", fs))
 }
 
-// 开启服务
-func startServer(s Server) {
-	checkError(http.ListenAndServe(s.Addr+":"+s.Port, nil), 200)
-}
-
 //注册路由
-func registerRouter() {
+func registerRouter(docs []Doc, port string, apiServer string) {
+	http.HandleFunc("/doc/v2/updated", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")             //允许访问所有域
+		w.Header().Add("Access-Control-Allow-Headers", "Content-Type") //header的类型
+		bytes, err := json.Marshal(map[string]interface{}{
+			"updated": updateQueue.All(),
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, _ = w.Write(bytes)
+	})
+
 	http.HandleFunc("/doc/v1", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")             //允许访问所有域
 		w.Header().Add("Access-Control-Allow-Headers", "Content-Type") //header的类型
 		bytes, err := json.Marshal(Response{
-			Docs:   docs,
-			IpAddr: ipAddr,
-			Port:   server.Port,
+			Docs:      docs,
+			IpAddr:    getIpv4Addr(),
+			Port:      port,
+			ApiServer: apiServer,
 		})
-		checkError(err, 200)
+		if err != nil {
+			log.Fatal(err)
+		}
 		_, _ = w.Write(bytes)
 	})
 }
 
-// 处理
-func toDoc() {
-
-}
-
-func getMapVal(val map[string]interface{}, key string) string {
-	var result string
-	if v, ok := val[key]; ok {
-		result = v.(string)
-	}
-	return result
-}
-
-// 更新配置文件
-func updateConfig(config []byte) {
-	checkError(ioutil.WriteFile("doc/public/config.json", config, 0644), 200)
-}
-
-//读取配置文件
-func ReadConfig(_f string) {
-	cfg, err := ioutil.ReadFile(_f)
-	checkError(err, 200)
-	config := make(map[string]interface{})
-	configInfo = config
-	checkError(json.Unmarshal(cfg, &config), 200)
-	// 读取配置文件配置
-	server = Server{
-		Addr:      getMapVal(config, "addr"),
-		Port:      getMapVal(config, "port"),
-		ApiServer: getMapVal(config, "apiServer"),
-	}
-	// 读取需要处理的文件
-	if files, ok := config["files"]; ok {
-		if v, ok := files.(map[string]interface{}); ok {
-			for k, file := range v { // 读取并解析文件
-				doc_ := readFile(file.(string))
-				docs = append(docs, Doc{
-					Name:  k,
-					Param: doc_,
-					Count: len(doc_),
-				})
-			}
-		}
+func startServer(addr string, port string) {
+	log.Printf("server: %s:%s", addr, port)
+	log.Printf("website: %s:%s/doc", addr, port)
+	if err := http.ListenAndServe(addr+":"+port, nil); err != nil {
+		log.Fatal(err)
 	}
 }
 
-func InitConfig(s Server) {
-	if s.Port != "" {
-		server.Port = s.Port
-		configInfo["port"] = server.Port
-	}
-	if s.Addr != "" {
-		server.Addr = ipAddr
-		configInfo["addr"] = ipAddr
-	}
-	if s.ApiServer != "" {
-		server.ApiServer = s.ApiServer
-		configInfo["apiServer"] = server.ApiServer
-	}
-	data, _ := json.Marshal(configInfo)
-	updateConfig(data)
+func key(filepath string) string {
+	filenameDecode := url.QueryEscape(filepath)
+	randNumber := strconv.FormatInt(rand.Int63(), 10)
+	key := fmt.Sprintf("%x", md5.Sum([]byte(randNumber+filenameDecode)))
+	return key
 }
 
-func InitAndRun(s Server) {
-	// 读取配置
-	ReadConfig(defaultConfigPath)
+func InitAndRun(apiServer string) {
 	// 初始化配置
-	InitConfig(s)
-	// 注册和更新数据
-	registerRouter()
-	// 开启静态文件服务
-	startStaticFileServer(defaultStaticPath)
+	c := newConfig()
+	c.initConfig()
+	// 文件监听
+	fWatcher := newFWatcher(c.Files)
+	fWatcher.run(&updateQueue)
+	// 处理文档
+	docs = make([]Doc, len(c.Files))
+	for k, v := range c.Files {
+		docs[k] = toDoc(v)
+	}
+	// 注册路由
+	registerRouter(docs, c.Port, c.ApiServer)
+	// 开启文件服务
+	staticFileServer(defaultStaticDir)
 	// 开启服务
-	startServer(s)
+	startServer(c.Addr, c.Port)
 }

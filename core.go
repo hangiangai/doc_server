@@ -2,66 +2,31 @@ package doc
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"strings"
 )
 
-type C struct {
-	s    bytes.Buffer
-	seek [][]int
+//
+type Annotation struct {
+	Key    string
+	Title  string
+	Url    string
+	Header string
+	Method string
+	Params [][]string
 }
 
-func readFile(_f string) []map[string][]string {
-	con, err := ioutil.ReadFile(_f)
-	checkError(err, 200)
-	conLen := len(con)
-	var readByte bytes.Buffer
-	var begin bool //
-	var p_index int = -1 //
-	var seek int // 偏移量
-	p := make([][]int, 21) // 用于标记关键字的下标
-	transformData := make([]map[string][]string, 0)
-	for i := 1; i < conLen; i++ {
-		if con[i] == '*' && con[i-1] == '/' {
-			begin = true
-			readByte = bytes.Buffer{}
-			p_index = -1
-			p = make([][]int, 20)
-			seek = 0
-		}
-		if begin && Filter(con[i]) {
-			readByte.WriteByte(con[i])
-			if con[i] == '@' {
-				p_index++
-				p[p_index] = append(p[p_index], seek)
-			}
-			if p_index > -1 && len(p[p_index]) > 0 && con[i] == ':' {
-				p[p_index] = append(p[p_index], seek)
-			}
-			seek++
-		}
-		if i+1 < conLen && con[i] == '*' && con[i+1] == '/' {
-			p[p_index+1] = append(p[p_index+1], len(readByte.String()))
-			res := transform(C{s: readByte, seek: p})
-			transformData = append(transformData, res)
-		}
-	}
-	return transformData
+//
+type Doc struct {
+	Name    string       // 文件名称
+	Content []Annotation // 内容
 }
 
-func transform(c C) map[string][]string {
-	params := make(map[string][]string)
-	for i := 0; len(c.seek[i]) > 1; i++ {
-		cStr := c.s.String()
-		key := cStr[c.seek[i][0]:c.seek[i][1]]
-		val := cStr[c.seek[i][1]+1 : c.seek[i+1][0]]
-		params[key] = append(params[key], val)
-	}
-	return params
-}
-
-
-// 过滤字符
-func Filter(c byte) bool {
+// 过滤字符串
+func filter(c byte) bool {
 	var result bool
 	switch c {
 	case uint8('\n'):
@@ -72,4 +37,93 @@ func Filter(c byte) bool {
 		result = true
 	}
 	return result
+}
+
+var (
+	// 文件路径 注释md5 注释
+	baseDocs = make(map[string]map[string]Annotation)
+)
+
+// 匹配关键字
+func match(annotation *Annotation, key string, value []string) {
+	switch key {
+	case "title":
+		annotation.Title = value[0]
+	case "url":
+		annotation.Url = value[0]
+	case "header":
+		annotation.Header = value[0]
+	case "method":
+		annotation.Method = value[0]
+	case "param":
+		annotation.Params = append(annotation.Params, value)
+	}
+}
+
+// 提取注释
+// con 需要解析的内容
+// handler 自定义操作函数
+func extractAnnotation(con []byte, handler func(annotation Annotation)) {
+	var begin bool
+	var conLen = len(con)
+	var annotation Annotation
+	var annotationCon bytes.Buffer
+	for i := 1; i < conLen; i++ {
+		if con[i] == '*' && con[i-1] == '/' {
+			// 是否开始解析
+			begin = true
+			// 存储注释内容
+			annotationCon = bytes.Buffer{}
+			// 存储当前解析的注释
+			annotation = Annotation{}
+		}
+		if filter(con[i]) && begin {
+			annotationCon.WriteByte(con[i])
+			if con[i] == '@' {
+				line, err := annotationCon.ReadBytes('@')
+				checkError(err)
+				toStr := string(line)
+				val := strings.Split(toStr[:len(toStr)-1], ":")
+				match(&annotation, val[0], val[1:])
+			}
+		}
+		if i+1 < conLen && con[i] == '*' && con[i+1] == '/' {
+			val := strings.Split(annotationCon.String(), ":")
+			match(&annotation, val[0], val[1:])
+			tempAtn := Annotation{
+				Title:  annotation.Title,
+				Url:    annotation.Url,
+				Header: annotation.Header,
+				Method: annotation.Method,
+				Params: annotation.Params,
+				Key:    fmt.Sprintf("%x", md5.Sum([]byte(annotation.Url+annotation.Method))),
+			}
+			if handler != nil { //执行函数不为nil
+				handler(tempAtn)
+			}
+		}
+	}
+}
+
+//
+func toDoc(filepath string) Doc {
+	con, err := ioutil.ReadFile(filepath)
+	if checkError(err) {
+		return Doc{}
+	}
+	doc := make([]Annotation, 0)
+	md5Sum := make(map[string]Annotation)
+	// 提取文件注释
+	extractAnnotation(con, func(annotation Annotation) {
+		doc = append(doc, annotation)
+		bs, err := json.Marshal(annotation)
+		checkError(err)
+		sum := fmt.Sprintf("%x", md5.Sum(bs))
+		md5Sum[sum] = annotation
+	})
+	baseDocs[filepath] = md5Sum
+	return Doc{
+		Name:    filepath,
+		Content: doc,
+	}
 }
