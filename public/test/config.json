@@ -1,0 +1,12 @@
+{
+  "addr": "192.168.0.110",
+  "apiServer": "192.168.0.110:86",
+
+  "files": [
+    "/home/hangiangai/go/src/JibeiServer/dbaccess/franchisee.go",
+    "/home/hangiangai/go/src/JibeiServer/dbaccess/goods.go",
+    "/home/hangiangai/go/src/JibeiServer/dbaccess/template.go"
+  ],
+
+  "port": "8888"
+}

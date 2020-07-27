@@ -24,9 +24,9 @@ func newConfig() *Config {
 
 func (c *Config) initConfig() {
 	cfg, err := ioutil.ReadFile(c.configPath)
-	checkError(err)
+	checkError(err, true)
 	config := make(map[string]interface{})
-	checkError(json.Unmarshal(cfg, &config))
+	checkError(json.Unmarshal(cfg, &config), true)
 	c.Addr = config["addr"].(string)
 	c.Port = config["port"].(string)
 	c.ApiServer = config["apiServer"].(string)
@@ -37,4 +37,5 @@ func (c *Config) initConfig() {
 			}
 		}
 	}
+	c.Files = append(c.Files, c.configPath)
 }

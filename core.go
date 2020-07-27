@@ -81,7 +81,7 @@ func extractAnnotation(con []byte, handler func(annotation Annotation)) {
 			annotationCon.WriteByte(con[i])
 			if con[i] == '@' {
 				line, err := annotationCon.ReadBytes('@')
-				checkError(err)
+				checkError(err, true)
 				toStr := string(line)
 				val := strings.Split(toStr[:len(toStr)-1], ":")
 				match(&annotation, val[0], val[1:])
@@ -105,23 +105,26 @@ func extractAnnotation(con []byte, handler func(annotation Annotation)) {
 	}
 }
 
-//
+//转化为文档
 func toDoc(filepath string) Doc {
 	con, err := ioutil.ReadFile(filepath)
-	if checkError(err) {
+	if checkError(err, true) {
 		return Doc{}
 	}
 	doc := make([]Annotation, 0)
+	// md5Sum值
 	md5Sum := make(map[string]Annotation)
 	// 提取文件注释
 	extractAnnotation(con, func(annotation Annotation) {
 		doc = append(doc, annotation)
 		bs, err := json.Marshal(annotation)
-		checkError(err)
+		checkError(err, true)
 		sum := fmt.Sprintf("%x", md5.Sum(bs))
 		md5Sum[sum] = annotation
 	})
+	// 保存基础文档注释
 	baseDocs[filepath] = md5Sum
+	// 防护Doc文档
 	return Doc{
 		Name:    filepath,
 		Content: doc,

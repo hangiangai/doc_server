@@ -11,9 +11,11 @@ type Notify struct {
 	Name  string
 }
 
-func checkError(err error) bool {
+func checkError(err error, show bool) bool {
 	if err != nil {
-		log.Fatal(err)
+		if show {
+			log.Println(err)
+		}
 		return true
 	}
 	return false
@@ -28,7 +30,7 @@ type FWatcher struct {
 
 func newFWatcher(files []string) *FWatcher {
 	watcher, err := fsnotify.NewWatcher()
-	checkError(err)
+	_ = checkError(err, true)
 	return &FWatcher{
 		watcher: watcher,
 		msg:     make(chan Notify),
@@ -45,7 +47,7 @@ func (fw *FWatcher) addFiles(files []string) {
 func (fw *FWatcher) addFile(filepath string) {
 	fw.files = append(fw.files, filepath)
 	err := fw.watcher.Add(filepath)
-	checkError(err)
+	checkError(err, true)
 }
 
 func (fw *FWatcher) startWatchFiles() {
@@ -61,32 +63,46 @@ func (fw *FWatcher) startWatchFiles() {
 			if !ok {
 				return
 			}
-			checkError(err)
+			_ = checkError(err, true)
 		}
 	}
 }
 
 
-func (fw *FWatcher) handleUpdated(queue *Queue) {
+func (fw *FWatcher)handleConfigUpdate(){
+
+}
+
+// 针对配置文件的增加和删除
+// add
+// remove
+// 调用toDoc
+
+
+func (fw *FWatcher) handleUpdated(p *chan bool) {
 	// 接收并处理更新
 	for v := range fw.msg {
-		if (fw.count + 1 ) % 2 == 0 {
+		if (fw.count+1)%2 == 0 {
 			var doc = Doc{
-				Name: v.Event.Name,
+				Name:    v.Event.Name,
 				Content: make([]Annotation, 0),
 			}
 			con, _ := ioutil.ReadFile(v.Event.Name)
+			// 提取注释
 			extractAnnotation(con, func(annotation Annotation) {
 				doc.Content = append(doc.Content, annotation)
 			})
-			queue.Add(doc)
+			//添加更新消息
+			updatedData.Add(doc)
+			// 通知更新
+			*p <- true
 		}
 		fw.count++
 	}
 }
 
-func (fw *FWatcher) run(queue *Queue) {
+func (fw *FWatcher) run(p *chan bool) {
 	fw.addFiles(fw.files)
 	go fw.startWatchFiles()
-	go fw.handleUpdated(queue)
+	go fw.handleUpdated(p)
 }
