@@ -1,4 +1,4 @@
-package doc
+package api_doc
 
 type Response struct {
 	Docs      []*Doc

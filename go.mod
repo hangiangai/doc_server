@@ -1,4 +1,4 @@
-module doc
+module api_doc
 
 go 1.14
 

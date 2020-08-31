@@ -5,9 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0f30b3ae-185a-4181-8938-32d8e316c90e" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core.go" beforeDir="false" afterPath="$PROJECT_DIR$/core.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/core_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/doc.go" beforeDir="false" afterPath="$PROJECT_DIR$/doc.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/match.go" beforeDir="false" afterPath="$PROJECT_DIR$/match.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/router.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/watch.go" beforeDir="false" afterPath="$PROJECT_DIR$/watch.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -140,10 +146,10 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="410" y="154" width="1363" height="839" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1598851060462" />
-    <state x="356" y="0" width="1197" height="1080" key="CommitChangelistDialog2" timestamp="1598853422157">
+    <state x="356" y="0" width="1197" height="1080" key="CommitChangelistDialog2" timestamp="1598863907732">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="356" y="0" width="1197" height="1080" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1598853422157" />
+    <state x="356" y="0" width="1197" height="1080" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1598863907732" />
     <state x="182" y="93" width="1536" height="894" key="DiffContextDialog" timestamp="1598853435327">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
@@ -172,10 +178,10 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="150" y="0" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1598851264111" />
-    <state x="355" y="151" width="1200" height="778" key="Vcs.Push.Dialog.v2" timestamp="1598853457497">
+    <state x="355" y="151" width="1200" height="778" key="Vcs.Push.Dialog.v2" timestamp="1598863910946">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="355" y="151" width="1200" height="778" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1598853457497" />
+    <state x="355" y="151" width="1200" height="778" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1598863910946" />
     <state x="453" y="-2" width="1009" height="1470" key="search.everywhere.popup" timestamp="1598852485947">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>

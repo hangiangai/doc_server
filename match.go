@@ -1,5 +1,5 @@
 
-package doc
+package api_doc
 
 func match(note *note, key string, value []string){
 	switch key {
