@@ -64,7 +64,7 @@ func extractNote(notes *[]note, con []byte, cLen int, count *int, filter func(n 
 					match(&(*notes)[*count], val[0], val[1:])
 				}
 			}
-		} else if i+1 < cLen && con[i] == '*' && con[i+1] == '/' {
+		} else if begin && i+1 < cLen && con[i] == '*' && con[i+1] == '/' {
 			begin = false
 			val := strings.Split(currentExtractCon.String(), ":")
 			match(&(*notes)[*count], val[0], val[1:])

@@ -1,6 +1,7 @@
+
 package doc
 
-func match(note *note, key string, value []string) {
+func match(note *note, key string, value []string){
 	switch key {
 	case "title":
 		note.Title = value[0]
@@ -12,5 +13,5 @@ func match(note *note, key string, value []string) {
 		note.Method = value[0]
 	case "param":
 		note.Params = append(note.Params, value)
-	}
+	} 
 }

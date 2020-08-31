@@ -71,7 +71,6 @@ func (fw *FWatcher) handleUpdated() {
 	for msg := range fw.msg {
 		if (fw.count+1)%2 == 0 {
 			if con := baseDocs.paramsFile(msg.Event.Name); con != nil {
-				// 替换之前的值
 				for i := 0; i < baseDocs.count; i++ {
 					if baseDocs.docs[i].Path == msg.Event.Name {
 						baseDocs.docs[i] = con
