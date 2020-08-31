@@ -1,0 +1,17 @@
+{
+  "files": [
+    "/home/hangiangai/go/src/JibeiServer/dbaccess/template.go"
+  ],
+  "port": "8889",
+  "addr": "0.0.0.0",
+  "matchKeys": [
+    {
+      "@": "%",
+      "@title": "%t",
+      "@url": "%u",
+      "@header": "%h",
+      "@method": "%m",
+      "@param": "%p"
+    }
+  ]
+}

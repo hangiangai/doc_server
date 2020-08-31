@@ -2,6 +2,7 @@ package doc
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -20,7 +21,7 @@ var (
 	}
 )
 
-type config struct {
+type Config struct {
 	Addr        string
 	Port        string
 	Files       []string
@@ -31,25 +32,31 @@ type config struct {
 	defaultLogs string
 }
 
-func NewConfig() *config {
-	c := &config{
-		defaultPath: "doc/public/config.json",
+func NewConfig(path string) *Config {
+	c := &Config{
+		defaultPath: "config.json",
 		defaultLogs: "",
 	}
-	c.readConfigFile();
-	c.collectMatchKey();
+	if path != "" {
+		c.defaultPath = path
+	}
+	c.readConfigFile()
+	c.collectMatchKey()
+	c.WriteMatchFunc()
 	return c
 }
 
-func (c *config) readConfigFile() {
+func (c *Config) readConfigFile() {
 	cfg, err := ioutil.ReadFile(c.defaultPath)
 	checkError(err, true)
 	if err := json.Unmarshal(cfg, c); err != nil {
 		panic(err)
 	}
+
+	fmt.Println(c)
 }
 
-func (c *config) collectMatchKey() map[string][]string {
+func (c *Config) collectMatchKey() map[string][]string {
 	for _, key := range c.MatchKeys {
 		for k, v := range key {
 			baseKeys[k] = append(baseKeys[k], v[1:])
@@ -58,18 +65,16 @@ func (c *config) collectMatchKey() map[string][]string {
 	return baseKeys
 }
 
-func (c *config) files() []string {
+func (c *Config) files() []string {
 	return c.Files
 }
 
-func (c *config) handlerConfigUpdated() map[string]int {
+func (c *Config) handlerConfigUpdated() map[string]int {
 	toMap := make(map[string]int)
 	return toMap
 }
 
-
-
-func (c *config) WriteMatchFunc() {
+func (c *Config) WriteMatchFunc() {
 	// 写入匹配函数
 	var matchStr string
 	matchStr += "\npackage doc"
@@ -86,7 +91,7 @@ func (c *config) WriteMatchFunc() {
 	matchStr += "\n\tcase \"" + strings.Join(baseKeys["@param"], "\",\"") + "\":"
 	matchStr += "\n\t\tnote.Params = append(note.Params, value)"
 	matchStr += "\n\t} \n}"
-	if err := ioutil.WriteFile("doc/match.go", []byte(matchStr), 0777); err != nil {
+	if err := ioutil.WriteFile("match.go", []byte(matchStr), 0777); err != nil {
 		log.Println(err)
 	}
 }

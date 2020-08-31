@@ -1,11 +1,10 @@
 package doc
 
-
 type Queue struct {
-	cap   int     // 容量
+	cap   int           // 容量
 	data  []interface{} // 数据
-	size  int     // 个数
-	index int     // 下标
+	size  int           // 个数
+	index int           // 下标
 }
 
 func NewQueue(n int) Queue {
@@ -43,7 +42,7 @@ func (q *Queue) All() []interface{} {
 	return ret
 }
 
-func (q *Queue)Size() int {
+func (q *Queue) Size() int {
 	return q.size
 }
 

@@ -29,23 +29,17 @@ type DataExchangeBody struct {
 
 var (
 	baseDocs = &Docs{docs: make([]*Doc, 0)}
-	cfg      = NewConfig()
+	config   *Config
 	store    = NewStore()
 	hub      = newHub()
 )
 
-func InitAndRun(apiServer string) {
-
+func InitAndRun(path string) {
 	store.Run()
 	go hub.run()
-
-	cfg.WriteMatchFunc()
-
-	baseDocs.params(cfg.files())
-
-	fWatcher := newFWatcher(cfg.files())
+	config = NewConfig(path)
+	baseDocs.params(config.files())
+	fWatcher := newFWatcher(config.files())
 	fWatcher.run()
-
-	initServer(cfg.Port, cfg.ApiServ)
+	initServer(config.Port, config.ApiServ)
 }
-

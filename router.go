@@ -250,7 +250,6 @@ func (engine *Engine) handleHttpRequest(ctx *Context) {
 	}
 }
 
-// 数据存储
 type Value struct {
 	data   interface{}
 	key    string
@@ -271,7 +270,7 @@ func NewStore() *Store {
 	return store
 }
 
-func insertionSort(arr []int){
+func insertionSort(arr []int) {
 	var arrLen = len(arr)
 	for i := 1; i < arrLen; i++ {
 		curr := arr[i]
@@ -296,7 +295,7 @@ func (s *Store) Run() {
 					}
 				}
 			case <-s.add:
-				insertionSort([]int{});
+				insertionSort([]int{})
 			}
 		}
 	}(s)
@@ -435,7 +434,7 @@ func (c *client) readPump() {
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		var body = exchangeBody{}
 		_ = json.Unmarshal(message, &body)
-		fmt.Println(body);
+		fmt.Println(body)
 	}
 }
 
