@@ -2,8 +2,8 @@ package doc
 
 import (
 	"github.com/fsnotify/fsnotify"
-	"io/ioutil"
 	"log"
+	"time"
 )
 
 type Notify struct {
@@ -57,7 +57,6 @@ func (fw *FWatcher) startWatchFiles() {
 			if !ok {
 				return
 			}
-			// 通知更新
 			fw.msg <- Notify{Event: event}
 		case err, ok := <-fw.watcher.Errors:
 			if !ok {
@@ -68,41 +67,30 @@ func (fw *FWatcher) startWatchFiles() {
 	}
 }
 
-
-func (fw *FWatcher)handleConfigUpdate(){
-
-}
-
-// 针对配置文件的增加和删除
-// add
-// remove
-// 调用toDoc
-
-
-func (fw *FWatcher) handleUpdated(p *chan bool) {
-	// 接收并处理更新
-	for v := range fw.msg {
+func (fw *FWatcher) handleUpdated() {
+	for msg := range fw.msg {
 		if (fw.count+1)%2 == 0 {
-			var doc = Doc{
-				Name:    v.Event.Name,
-				Content: make([]Annotation, 0),
+			if con := baseDocs.paramsFile(msg.Event.Name); con != nil {
+				// 替换之前的值
+				for i := 0; i < baseDocs.count; i++ {
+					if baseDocs.docs[i].Path == msg.Event.Name {
+						baseDocs.docs[i] = con
+					}
+				}
+				store.Set("updated", con, time.Second*61)
+				hub.broadcast <- exchangeBody{
+					Type: 3,
+				}
 			}
-			con, _ := ioutil.ReadFile(v.Event.Name)
-			// 提取注释
-			extractAnnotation(con, func(annotation Annotation) {
-				doc.Content = append(doc.Content, annotation)
-			})
-			//添加更新消息
-			updatedData.Add(doc)
-			// 通知更新
-			*p <- true
 		}
 		fw.count++
 	}
 }
 
-func (fw *FWatcher) run(p *chan bool) {
+func (fw *FWatcher) run() {
 	fw.addFiles(fw.files)
+	// 监听文件
 	go fw.startWatchFiles()
-	go fw.handleUpdated(p)
+	// 处理文件
+	go fw.handleUpdated()
 }
